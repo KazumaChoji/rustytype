@@ -1,4 +1,4 @@
-//! Utilities for the terminal UI of toipe.
+//! Utilities for the terminal UI of rustytype.
 
 use std::{
     fmt::Display,
@@ -13,7 +13,7 @@ use termion::{
     style, terminal_size,
 };
 
-use crate::ToipeError;
+use crate::RustyTypeError;
 use anyhow::Result;
 
 const MIN_LINE_WIDTH: usize = 50;
@@ -221,8 +221,8 @@ impl CursorPos {
     }
 }
 
-/// terminal UI of toipe
-pub struct ToipeTui {
+/// terminal UI of rustytype
+pub struct RustyTypeTui {
     stdout: RawTerminal<Stdout>,
     cursor_pos: CursorPos,
     track_lines: bool,
@@ -231,7 +231,7 @@ pub struct ToipeTui {
 
 type MaybeError<T = ()> = Result<T>;
 
-impl ToipeTui {
+impl RustyTypeTui {
     /// Initializes stdout in raw mode for the TUI.
     ///
     /// NOTE: does not clear the screen when initialized.
@@ -413,15 +413,15 @@ impl ToipeTui {
 
         max_word_len = std::cmp::max(max_word_len + 1, MIN_LINE_WIDTH);
         if lines.len() + self.bottom_lines_len + 2 > terminal_height as usize {
-            return Err(ToipeError::from(format!(
-                "Terminal height is too short! Toipe requires at least {} lines, got {} lines",
+            return Err(RustyTypeError::from(format!(
+                "Terminal height is too short! RustyType requires at least {} lines, got {} lines",
                 lines.len() + self.bottom_lines_len + 2,
                 terminal_height,
             ))
             .into());
         } else if max_word_len > terminal_width as usize {
-            return Err(ToipeError::from(format!(
-                "Terminal width is too low! Toipe requires at least {} columns, got {} columns",
+            return Err(RustyTypeError::from(format!(
+                "Terminal width is too low! RustyType requires at least {} columns, got {} columns",
                 max_word_len, terminal_width,
             ))
             .into());
@@ -516,19 +516,19 @@ impl ToipeTui {
     }
 }
 
-impl Default for ToipeTui {
+impl Default for RustyTypeTui {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Drop for ToipeTui {
+impl Drop for RustyTypeTui {
     /// Resets terminal.
     ///
     /// Clears screen and sets the cursor to a non-blinking block.
     ///
     /// TODO: print error message when terminal height/width is too small.
-    /// Take a look at https://github.com/Samyak2/toipe/pull/28#discussion_r851784291 for more info.
+    /// Take a look at https://github.com/Samyak2/rustytype/pull/28#discussion_r851784291 for more info.
     fn drop(&mut self) {
         write!(
             self.stdout,

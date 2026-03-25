@@ -2,20 +2,20 @@ use anyhow::Result;
 use clap::StructOpt;
 
 use std::io::stdin;
-use toipe::config::ToipeConfig;
-use toipe::Toipe;
+use rustytype::config::RustyTypeConfig;
+use rustytype::RustyType;
 
 fn main() -> Result<()> {
-    let config = ToipeConfig::parse();
+    let config = RustyTypeConfig::parse();
 
-    let mut toipe = Toipe::new(config)?;
+    let mut rustytype = RustyType::new(config)?;
 
     let stdin = stdin();
 
     loop {
         let stdin = stdin.lock();
-        if let Ok((true, _)) = toipe.test(stdin) {
-            toipe.restart()?;
+        if let Ok((true, _)) = rustytype.test(stdin) {
+            rustytype.restart()?;
         } else {
             break;
         }

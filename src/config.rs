@@ -1,4 +1,4 @@
-//! Configuration for Toipe.
+//! Configuration for RustyType.
 //!
 //! Designed for command-line arguments using [`clap`], but can be used
 //! as a library too.
@@ -15,10 +15,10 @@ ctrl-r: restart test with a new set of words
 ctrc-w: delete last word
 ";
 
-/// Main configuration for Toipe.
+/// Main configuration for RustyType.
 #[derive(Parser)]
 #[clap(author, version, about = CLI_HELP)]
-pub struct ToipeConfig {
+pub struct RustyTypeConfig {
     /// Word list name.
     #[clap(arg_enum, short, long, default_value_t = BuiltInWordlist::Top250)]
     pub wordlist: BuiltInWordlist,
@@ -35,7 +35,7 @@ pub struct ToipeConfig {
     pub punctuation: bool,
 }
 
-impl ToipeConfig {
+impl RustyTypeConfig {
     /// Name of the text used for typing test
     pub fn text_name(&self) -> String {
         if let Some(wordlist_file) = &self.wordlist_file {

@@ -1,9 +1,9 @@
-//! Toipe is a terminal-based typing test application.
+//! RustyType is a terminal-based typing test application.
 //!
-//! Please see the [README](https://github.com/Samyak2/toipe/) for
+//! Please see the [README](https://github.com/Samyak2/rustytype/) for
 //! installation and usage instructions.
 //!
-//! Toipe provides an API to invoke it from another application or
+//! RustyType provides an API to invoke it from another application or
 //! library. This documentation describes the API and algorithms used
 //! internally.
 //!
@@ -20,33 +20,33 @@ use std::io::StdinLock;
 use std::path::PathBuf;
 use std::time::Instant;
 
-use config::ToipeConfig;
-use results::ToipeResults;
+use config::RustyTypeConfig;
+use results::RustyTypeResults;
 use termion::input::Keys;
 use termion::{color, event::Key, input::TermRead};
 use textgen::{PunctuatedWordSelector, RawWordSelector, WordSelector};
-use tui::{Text, ToipeTui};
+use tui::{Text, RustyTypeTui};
 use wordlists::{BuiltInWordlist, OS_WORDLIST_PATH};
 
 use anyhow::{Context, Result};
 
 /// Typing test terminal UI and logic.
-pub struct Toipe {
-    tui: ToipeTui,
+pub struct RustyType {
+    tui: RustyTypeTui,
     text: Vec<Text>,
     words: Vec<String>,
     word_selector: Box<dyn WordSelector>,
-    config: ToipeConfig,
+    config: RustyTypeConfig,
 }
 
-/// Represents any error caught in Toipe.
+/// Represents any error caught in RustyType.
 #[derive(Debug)]
-pub struct ToipeError {
+pub struct RustyTypeError {
     /// Error message. Should not start with "error" or similar.
     pub msg: String,
 }
 
-impl ToipeError {
+impl RustyTypeError {
     /// Prefixes the message with a context
     pub fn with_context(mut self, context: &str) -> Self {
         self.msg = context.to_owned() + &self.msg;
@@ -54,28 +54,28 @@ impl ToipeError {
     }
 }
 
-impl From<String> for ToipeError {
+impl From<String> for RustyTypeError {
     fn from(error: String) -> Self {
-        ToipeError { msg: error }
+        RustyTypeError { msg: error }
     }
 }
 
-impl std::fmt::Display for ToipeError {
+impl std::fmt::Display for RustyTypeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(format!("ToipeError: {}", self.msg).as_str())
+        f.write_str(format!("RustyTypeError: {}", self.msg).as_str())
     }
 }
 
-impl std::error::Error for ToipeError {}
+impl std::error::Error for RustyTypeError {}
 
-impl<'a> Toipe {
+impl<'a> RustyType {
     /// Initializes a new typing test on the standard output.
     ///
-    /// See [`ToipeConfig`] for configuration options.
+    /// See [`RustyTypeConfig`] for configuration options.
     ///
     /// Initializes the word selector.
-    /// Also invokes [`Toipe::restart()`].
-    pub fn new(config: ToipeConfig) -> Result<Self> {
+    /// Also invokes [`RustyType::restart()`].
+    pub fn new(config: RustyTypeConfig) -> Result<Self> {
         let mut word_selector: Box<dyn WordSelector> = if let Some(wordlist_path) =
             config.wordlist_file.clone()
         {
@@ -102,7 +102,7 @@ impl<'a> Toipe {
         } else {
             // this should never happen!
             // TODO: somehow enforce this at compile time?
-            return Err(ToipeError::from("Undefined word list or path.".to_owned()))?;
+            return Err(RustyTypeError::from("Undefined word list or path.".to_owned()))?;
         };
 
         if config.punctuation {
@@ -112,17 +112,17 @@ impl<'a> Toipe {
             ))
         }
 
-        let mut toipe = Toipe {
-            tui: ToipeTui::new(),
+        let mut rustytype = RustyType {
+            tui: RustyTypeTui::new(),
             words: Vec::new(),
             text: Vec::new(),
             word_selector,
             config,
         };
 
-        toipe.restart()?;
+        rustytype.restart()?;
 
-        Ok(toipe)
+        Ok(rustytype)
     }
 
     /// Make the terminal ready for the next typing test.
@@ -153,12 +153,12 @@ impl<'a> Toipe {
 
     /// Start typing test by monitoring input keys.
     ///
-    /// Must only be invoked after [`Toipe::restart()`].
+    /// Must only be invoked after [`RustyType::restart()`].
     ///
     /// If the test completes successfully, returns a boolean indicating
     /// whether the user wants to do another test and the
-    /// [`ToipeResults`] for this test.
-    pub fn test(&mut self, stdin: StdinLock<'a>) -> Result<(bool, ToipeResults)> {
+    /// [`RustyTypeResults`] for this test.
+    pub fn test(&mut self, stdin: StdinLock<'a>) -> Result<(bool, RustyTypeResults)> {
         let mut input = Vec::<char>::new();
         let original_text = self
             .text
@@ -284,7 +284,7 @@ impl<'a> Toipe {
                 },
             );
 
-        let results = ToipeResults {
+        let results = RustyTypeResults {
             total_words: self.words.len(),
             total_chars_typed: num_chars_typed,
             total_chars_in_text: input.len(),
@@ -306,7 +306,7 @@ impl<'a> Toipe {
 
     fn display_results(
         &mut self,
-        results: ToipeResults,
+        results: RustyTypeResults,
         mut keys: Keys<StdinLock>,
     ) -> Result<bool> {
         self.tui.reset_screen()?;

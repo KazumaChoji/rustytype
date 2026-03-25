@@ -2,7 +2,7 @@ use std::time::{Duration, Instant};
 
 /// Stores stats from a typing test.
 #[derive(Clone)]
-pub struct ToipeResults {
+pub struct RustyTypeResults {
     /// number of words in given text
     pub total_words: usize,
     /// number of chars typed including those typed before being cleared
@@ -21,7 +21,7 @@ pub struct ToipeResults {
     pub ended_at: Instant,
 }
 
-impl ToipeResults {
+impl RustyTypeResults {
     /// Duration of the test.
     ///
     /// i.e., the time between the user pressing the first key and them
@@ -65,7 +65,7 @@ mod tests {
     fn sanity() {
         let started_at = Instant::now();
         let ended_at = started_at + Duration::new(10, 0);
-        let results = ToipeResults {
+        let results = RustyTypeResults {
             total_words: 0,
             total_chars_typed: 100,
             total_chars_in_text: 120,
@@ -84,8 +84,8 @@ mod tests {
 
     #[test]
     fn accuracy() {
-        fn get_toipe_results(total_chars_typed: usize, total_char_errors: usize) -> ToipeResults {
-            ToipeResults {
+        fn get_rustytype_results(total_chars_typed: usize, total_char_errors: usize) -> RustyTypeResults {
+            RustyTypeResults {
                 total_words: 0,
                 total_chars_typed,
                 total_chars_in_text: 0,
@@ -101,27 +101,27 @@ mod tests {
 
         // no errors
         assert_ulps_eq!(
-            get_toipe_results(100, 0).accuracy(),
+            get_rustytype_results(100, 0).accuracy(),
             1.0,
             max_ulps = max_ulps
         );
         // nothing typed
-        assert_ulps_eq!(get_toipe_results(0, 0).accuracy(), 0.0, max_ulps = max_ulps);
+        assert_ulps_eq!(get_rustytype_results(0, 0).accuracy(), 0.0, max_ulps = max_ulps);
         // all wrong
         assert_ulps_eq!(
-            get_toipe_results(100, 100).accuracy(),
+            get_rustytype_results(100, 100).accuracy(),
             0.0,
             max_ulps = max_ulps
         );
         // half correct
         assert_ulps_eq!(
-            get_toipe_results(100, 50).accuracy(),
+            get_rustytype_results(100, 50).accuracy(),
             0.5,
             max_ulps = max_ulps
         );
         // more errors than correct
         assert_ulps_eq!(
-            get_toipe_results(100, 150).accuracy(),
+            get_rustytype_results(100, 150).accuracy(),
             -0.5,
             max_ulps = max_ulps
         );
@@ -129,16 +129,16 @@ mod tests {
 
     #[test]
     fn wpm() {
-        fn get_toipe_results(
+        fn get_rustytype_results(
             final_chars_typed_correctly: usize,
             final_uncorrected_errors: usize,
             duration: f64,
-        ) -> ToipeResults {
+        ) -> RustyTypeResults {
             let started_at = Instant::now();
             let seconds = duration.round();
             let nanoseconds = (duration - seconds) * 1_000_000_000.0;
             let ended_at = started_at + Duration::new(seconds as u64, nanoseconds as u32);
-            ToipeResults {
+            RustyTypeResults {
                 total_words: 0,
                 total_chars_typed: 0,
                 total_chars_in_text: 0,
@@ -152,50 +152,50 @@ mod tests {
 
         let max_ulps = 1;
         assert_ulps_eq!(
-            get_toipe_results(100, 5, 30.0).wpm(),
+            get_rustytype_results(100, 5, 30.0).wpm(),
             30.0,
             max_ulps = max_ulps
         );
         assert_ulps_eq!(
-            get_toipe_results(1000, 50, 30.0).wpm(),
+            get_rustytype_results(1000, 50, 30.0).wpm(),
             300.0,
             max_ulps = max_ulps
         );
         assert_ulps_eq!(
-            get_toipe_results(200, 0, 30.0).wpm(),
+            get_rustytype_results(200, 0, 30.0).wpm(),
             80.0,
             max_ulps = max_ulps
         );
         assert_ulps_eq!(
-            get_toipe_results(200, 30, 30.0).wpm(),
+            get_rustytype_results(200, 30, 30.0).wpm(),
             20.0,
             max_ulps = max_ulps
         );
         // too many errors - cancels out
         assert_ulps_eq!(
-            get_toipe_results(200, 40, 30.0).wpm(),
+            get_rustytype_results(200, 40, 30.0).wpm(),
             0.0,
             max_ulps = max_ulps
         );
         // no negative wpms
         assert_ulps_eq!(
-            get_toipe_results(200, 50, 30.0).wpm(),
+            get_rustytype_results(200, 50, 30.0).wpm(),
             0.0,
             max_ulps = max_ulps
         );
         assert_ulps_eq!(
-            get_toipe_results(1, 0, 1.0).wpm(),
+            get_rustytype_results(1, 0, 1.0).wpm(),
             12.0,
             max_ulps = max_ulps
         );
         // skdlhaslkd won't give you any score!
         assert_ulps_eq!(
-            get_toipe_results(0, 10, 1.0).wpm(),
+            get_rustytype_results(0, 10, 1.0).wpm(),
             0.0,
             max_ulps = max_ulps
         );
         assert_ulps_eq!(
-            get_toipe_results(0, 0, 0.01).wpm(),
+            get_rustytype_results(0, 0, 0.01).wpm(),
             0.0,
             max_ulps = max_ulps
         );
