@@ -2,3 +2,5 @@
 
 # temporary rustfmt files
 *.rustfmt
+
+.claude/
