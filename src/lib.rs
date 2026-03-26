@@ -196,6 +196,7 @@ impl<'a> RustyType {
             fn to_restart(&self) -> bool {
                 matches!(self, TestStatus::Restart)
             }
+
         }
 
         let mut process_key = |key: Key| -> Result<TestStatus> {
@@ -314,11 +315,57 @@ impl<'a> RustyType {
         Ok((to_restart, results))
     }
 
-    fn display_results(
+
+    fn display_settings(
         &mut self,
-        results: RustyTypeResults,
-        mut keys: Keys<StdinLock>,
-    ) -> Result<bool> {
+        keys: &mut Keys<StdinLock>,
+    ) -> Result<()> {
+        self.tui.reset_screen()?;
+        self.tui.display_lines::<&[Text], _>(&[
+            &[Text::from(format!(
+                    "time limit: {} seconds",
+                    match self.config.time_limit {
+                        Some(limit) => format!("{}", limit),
+                        None => "infinite".to_string(),
+                    },
+            ))],
+            &[Text::from(format!(
+                    "num words: {}",
+                    self.config.num_words,
+            ))],
+            &[Text::from(format!(
+                    "uppercase: {}",
+                    self.config.uppercase,
+            ))],
+            &[Text::from(format!(
+                    "punctuation: {}",
+                    self.config.punctuation,
+
+            ))],
+        ])?;
+
+        self.tui.display_lines_bottom(&[&[
+            Text::from("ctrl + s").with_color(color::Blue),
+            Text::from(" to go back, ").with_faint(),
+        ]])?;
+        // no cursor on results page
+        self.tui.hide_cursor()?;
+
+        // TODO: make this a bit more general
+        // perhaps use a `known_keys_pressed` flag?
+        let mut go_back_bool: Option<bool> = None;
+        while go_back_bool.is_none() {
+            match keys.next().unwrap()? {
+                // press ctrl + 's' to go back to results page
+                Key::Ctrl('s') => go_back_bool = Some(true),
+                _ => {}
+            }
+        }
+
+        Ok(())
+    }
+    fn draw_results_screen(&mut self, results:&RustyTypeResults) -> Result<()> {
+
         self.tui.reset_screen()?;
 
         self.tui.display_lines::<&[Text], _>(&[
@@ -347,10 +394,20 @@ impl<'a> RustyType {
             Text::from(" to restart, ").with_faint(),
             Text::from("ctrl-c").with_color(color::Blue),
             Text::from(" to quit ").with_faint(),
+            Text::from("ctrl-s").with_color(color::Blue),
+            Text::from(" to settings page ").with_faint(),
         ]])?;
         // no cursor on results page
         self.tui.hide_cursor()?;
+        Ok(())
 
+    }
+    fn display_results(
+        &mut self,
+        results: RustyTypeResults,
+        mut keys: Keys<StdinLock>,
+    ) -> Result<bool> {
+        self.draw_results_screen(&results)?;
         // TODO: make this a bit more general
         // perhaps use a `known_keys_pressed` flag?
         let mut to_restart: Option<bool> = None;
@@ -360,6 +417,11 @@ impl<'a> RustyType {
                 Key::Ctrl('r') => to_restart = Some(true),
                 // press ctrl + 'c' to quit
                 Key::Ctrl('c') => to_restart = Some(false),
+                // press ctrl + 's' to go to settings
+                Key::Ctrl('s') => { 
+                    self.display_settings(&mut keys)?; 
+                    self.draw_results_screen(&results)?;
+                }            
                 _ => {}
             }
         }
