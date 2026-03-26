@@ -134,6 +134,9 @@ impl<'a> RustyType {
 
         self.words = self.word_selector.new_words(self.config.num_words)?;
 
+        if self.config.uppercase {
+            self.words = self.words.iter().map(|w| w.to_uppercase()).collect()
+        }
         self.tui.display_lines_bottom(&[&[
             Text::from("ctrl-r").with_color(color::Blue),
             Text::from(" to restart, ").with_faint(),

@@ -33,6 +33,9 @@ pub struct RustyTypeConfig {
     /// Whether to include punctuation
     #[clap(short, long)]
     pub punctuation: bool,
+    /// Whether to show words in UPPERCASE
+    #[clap(short, long)]
+    pub uppercase: bool,
 }
 
 impl RustyTypeConfig {
