@@ -36,7 +36,7 @@ pub struct RustyTypeConfig {
     /// Whether to show words in UPPERCASE
     #[clap(short, long)]
     pub uppercase: bool,
-    /// Whether to add a time limit
+    /// Whether to add a time limit in seconds
     #[clap(short, long)]
     pub time_limit: Option<u64>,
 }
