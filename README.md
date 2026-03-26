@@ -11,3 +11,4 @@ a fork of toipe. still work in progress.
 changes from toipe:
 1. added --uppercase flag
 2. added --time-limit flag (in seconds)
+3. added a settings page (only display)
