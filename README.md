@@ -11,4 +11,4 @@ a fork of toipe. still work in progress.
 changes from toipe:
 1. added --uppercase flag
 2. added --time-limit flag (in seconds)
-3. added a settings page (only display)
+3. added a settings page to edit RustyTypeConfig thru TUI rather than command line arguments 

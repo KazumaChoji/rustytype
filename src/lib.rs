@@ -315,33 +315,41 @@ impl<'a> RustyType {
         Ok((to_restart, results))
     }
 
-
-    fn display_settings(
-        &mut self,
-        keys: &mut Keys<StdinLock>,
-    ) -> Result<()> {
+    fn draw_settings_screen(&mut self, selected:usize) -> Result<()> {
         self.tui.reset_screen()?;
-        self.tui.display_lines::<&[Text], _>(&[
-            &[Text::from(format!(
+        let mut time_limit_text = Text::from(format!(
                     "time limit: {} seconds",
                     match self.config.time_limit {
                         Some(limit) => format!("{}", limit),
                         None => "infinite".to_string(),
                     },
-            ))],
-            &[Text::from(format!(
+            ));
+        let mut num_words_text = Text::from(format!(
                     "num words: {}",
                     self.config.num_words,
-            ))],
-            &[Text::from(format!(
+            ));
+        let mut uppercase_text = Text::from(format!(
                     "uppercase: {}",
                     self.config.uppercase,
-            ))],
-            &[Text::from(format!(
+            ));
+        let mut punctuation_text = Text::from(format!(
                     "punctuation: {}",
                     self.config.punctuation,
 
-            ))],
+            ));
+
+        match selected {
+            0 => time_limit_text = time_limit_text.with_color(color::LightBlue),
+            1 => num_words_text = num_words_text.with_color(color::LightBlue),
+            2 => uppercase_text = uppercase_text.with_color(color::LightBlue),
+            3 => punctuation_text = punctuation_text.with_color(color::LightBlue),
+            _ => {}
+        }
+        self.tui.display_lines::<&[Text], _>(&[
+            &[time_limit_text],
+            &[num_words_text],
+            &[uppercase_text],
+            &[punctuation_text],
         ])?;
 
         self.tui.display_lines_bottom(&[&[
@@ -350,14 +358,75 @@ impl<'a> RustyType {
         ]])?;
         // no cursor on results page
         self.tui.hide_cursor()?;
+        Ok(())
+    }
+
+    fn display_settings(
+        &mut self,
+        keys: &mut Keys<StdinLock>,
+    ) -> Result<()> {
+        self.draw_settings_screen(0)?;
 
         // TODO: make this a bit more general
         // perhaps use a `known_keys_pressed` flag?
         let mut go_back_bool: Option<bool> = None;
+        let mut selected: usize = 0;
         while go_back_bool.is_none() {
             match keys.next().unwrap()? {
                 // press ctrl + 's' to go back to results page
                 Key::Ctrl('s') => go_back_bool = Some(true),
+                Key::Down => {if selected < 3 {selected +=1}; self.draw_settings_screen(selected)?;}, 
+                Key::Up => {if selected > 0 {selected -=1}; self.draw_settings_screen(selected)?;},
+                Key::Right => {
+                    match selected {
+                        0 => {
+                            match self.config.time_limit {
+                                Some(limit) => {
+                                    if limit < 60 {
+                                        self.config.time_limit = Some(limit + 5);
+                                    } else {
+                                        self.config.time_limit = None;
+                                    }
+                                },
+                                None => {
+                                    self.config.time_limit = Some(5);
+                                }
+                            }
+                        }
+                        1 => { if self.config.num_words < 100 { self.config.num_words += 1 } }
+                        2 => { self.config.uppercase = !self.config.uppercase }
+                        3 => { self.config.punctuation = !self.config.punctuation }
+                        _ => {}
+                    }
+                    self.draw_settings_screen(selected)?;
+                },
+                Key::Left => {
+                    match selected {
+                        0 => {
+                            match self.config.time_limit {
+                                Some(limit) => {
+                                    // this needs to be 5 or whatever increment
+                                    // we are using, because it is unsigned 64 bit
+                                    // type, and we have underflow if negative
+                                    if limit > 5 {
+                                        self.config.time_limit = Some(limit - 5);
+                                    } else {
+                                        self.config.time_limit = None;
+                                    }
+                                },
+                                None => {
+                                    self.config.time_limit = Some(60);
+                                }
+                            }
+                        }
+                        1 => { if self.config.num_words > 5 { self.config.num_words -= 1 } }
+                        2 => { self.config.uppercase = !self.config.uppercase }
+                        3 => { self.config.punctuation = !self.config.punctuation }
+                        _ => {}
+                    }
+                    self.draw_settings_screen(selected)?;
+
+                }
                 _ => {}
             }
         }
