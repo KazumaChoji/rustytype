@@ -18,7 +18,7 @@ pub mod wordlists;
 
 use std::io::StdinLock;
 use std::path::PathBuf;
-use std::time::Instant;
+use std::time::{Instant, Duration};
 
 use config::RustyTypeConfig;
 use results::RustyTypeResults;
@@ -265,6 +265,13 @@ impl<'a> RustyType {
         if status.to_process_more_keys() {
             for key in &mut keys {
                 status = process_key(key?)?;
+                if let Some(time_limit) = self.config.time_limit {
+                 
+                  if Instant::now() - started_at > Duration::from_secs(time_limit) {
+                      status = TestStatus::Done;
+                      break;
+                  }
+                }
                 if !status.to_process_more_keys() {
                     break;
                 }
