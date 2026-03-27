@@ -5,7 +5,7 @@ rustytype
 </h1>
 
 <p align=center>
-a fork of toipe. still work in progress.
+a fork of toipe, a terminal typing test.
 </p>
 
 changes from toipe:
