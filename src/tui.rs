@@ -13,9 +13,8 @@ use termion::{
     style, terminal_size,
 };
 
-use crate::RustyTypeError;
+use crate::{RustyTypeError, config::ColorTheme};
 use anyhow::Result;
-
 const MIN_LINE_WIDTH: usize = 50;
 
 /// Describes something that has a printable length.
@@ -259,8 +258,11 @@ impl RustyTypeTui {
     ///
     /// Clears screen, moves cursor to the center and changes cursor to
     /// a blinking bar.
-    pub fn reset_screen(&mut self) -> MaybeError {
+    pub fn reset_screen(&mut self, color_theme: ColorTheme) -> MaybeError {
         let (sizex, sizey) = terminal_size()?;
+
+        let bg_color = color_theme.bg_color();
+        write!(self.stdout, "{}", color::Bg(bg_color))?;
 
         write!(
             self.stdout,
@@ -532,7 +534,8 @@ impl Drop for RustyTypeTui {
     fn drop(&mut self) {
         write!(
             self.stdout,
-            "{}{}{}",
+            "{}{}{}{}",
+            color::Bg(color::Reset),                               
             clear::All,
             cursor::SteadyBlock,
             cursor::Goto(1, 1)

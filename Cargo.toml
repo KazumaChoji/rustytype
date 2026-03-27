@@ -29,3 +29,6 @@ rand = "0.8.4"
 termion = "1.5.6"
 include-flate = {version ="0.1.4", features=["stable"]}
 approx = "0.5.1"
+strum = "0.28"
+strum_macros = "0.28"
+

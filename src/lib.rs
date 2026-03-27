@@ -130,7 +130,7 @@ impl<'a> RustyType {
     /// Clears the screen, generates new words and displays them on the
     /// UI.
     pub fn restart(&mut self) -> Result<()> {
-        self.tui.reset_screen()?;
+        self.tui.reset_screen(self.config.color_theme)?;
 
         self.words = self.word_selector.new_words(self.config.num_words)?;
 
@@ -228,13 +228,13 @@ impl<'a> RustyType {
 
                     if original_text[input.len() - 1] == c {
                         self.tui
-                            .display_raw_text(&Text::from(c).with_color(color::LightGreen))?;
+                            .display_raw_text(&Text::from(c).with_color(self.config.color_theme.correct_color()))?;
                         self.tui.move_to_next_char()?;
                     } else {
                         self.tui.display_raw_text(
                             &Text::from(original_text[input.len() - 1])
                                 .with_underline()
-                                .with_color(color::Red),
+                                .with_color(self.config.color_theme.incorrect_color()),
                         )?;
                         self.tui.move_to_next_char()?;
                         num_errors += 1;
@@ -316,7 +316,7 @@ impl<'a> RustyType {
     }
 
     fn draw_settings_screen(&mut self, selected:usize) -> Result<()> {
-        self.tui.reset_screen()?;
+        self.tui.reset_screen(self.config.color_theme)?;
         let mut time_limit_text = Text::from(format!(
                     "time limit: {} seconds",
                     match self.config.time_limit {
@@ -337,12 +337,17 @@ impl<'a> RustyType {
                     self.config.punctuation,
 
             ));
+        let mut color_theme = Text::from(format!(
+                "color theme: {}",
+                self.config.color_theme,
+        ));
 
         match selected {
             0 => time_limit_text = time_limit_text.with_color(color::LightBlue),
             1 => num_words_text = num_words_text.with_color(color::LightBlue),
             2 => uppercase_text = uppercase_text.with_color(color::LightBlue),
             3 => punctuation_text = punctuation_text.with_color(color::LightBlue),
+            4 => color_theme = color_theme.with_color(color::LightBlue),
             _ => {}
         }
         self.tui.display_lines::<&[Text], _>(&[
@@ -350,6 +355,7 @@ impl<'a> RustyType {
             &[num_words_text],
             &[uppercase_text],
             &[punctuation_text],
+            &[color_theme],
         ])?;
 
         self.tui.display_lines_bottom(&[&[
@@ -375,7 +381,7 @@ impl<'a> RustyType {
             match keys.next().unwrap()? {
                 // press ctrl + 's' to go back to results page
                 Key::Ctrl('s') => go_back_bool = Some(true),
-                Key::Down => {if selected < 3 {selected +=1}; self.draw_settings_screen(selected)?;}, 
+                Key::Down => {if selected < 4 {selected +=1}; self.draw_settings_screen(selected)?;}, 
                 Key::Up => {if selected > 0 {selected -=1}; self.draw_settings_screen(selected)?;},
                 Key::Right => {
                     match selected {
@@ -396,6 +402,7 @@ impl<'a> RustyType {
                         1 => { if self.config.num_words < 100 { self.config.num_words += 1 } }
                         2 => { self.config.uppercase = !self.config.uppercase }
                         3 => { self.config.punctuation = !self.config.punctuation }
+                        4 => { self.config.color_theme = self.config.color_theme.next()}
                         _ => {}
                     }
                     self.draw_settings_screen(selected)?;
@@ -422,6 +429,7 @@ impl<'a> RustyType {
                         1 => { if self.config.num_words > 5 { self.config.num_words -= 1 } }
                         2 => { self.config.uppercase = !self.config.uppercase }
                         3 => { self.config.punctuation = !self.config.punctuation }
+                        4 => { self.config.color_theme = self.config.color_theme.prev()}
                         _ => {}
                     }
                     self.draw_settings_screen(selected)?;
@@ -435,7 +443,7 @@ impl<'a> RustyType {
     }
     fn draw_results_screen(&mut self, results:&RustyTypeResults) -> Result<()> {
 
-        self.tui.reset_screen()?;
+        self.tui.reset_screen(self.config.color_theme)?;
 
         self.tui.display_lines::<&[Text], _>(&[
             &[Text::from(format!(
