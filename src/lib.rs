@@ -20,14 +20,13 @@ use std::io::StdinLock;
 use std::path::PathBuf;
 use std::time::{Instant, Duration};
 
-use config::RustyTypeConfig;
+use config::{RustyTypeConfig, SavedSettings};
 use results::RustyTypeResults;
 use termion::input::Keys;
 use termion::{color, event::Key, input::TermRead};
 use textgen::{PunctuatedWordSelector, RawWordSelector, WordSelector};
 use tui::{Text, RustyTypeTui};
 use wordlists::{BuiltInWordlist, OS_WORDLIST_PATH};
-
 use anyhow::{Context, Result};
 
 /// Typing test terminal UI and logic.
@@ -360,7 +359,7 @@ impl<'a> RustyType {
 
         self.tui.display_lines_bottom(&[&[
             Text::from("ctrl + s").with_color(color::Blue),
-            Text::from(" to go back, ").with_faint(),
+            Text::from(" to save and go back").with_faint(),
         ]])?;
         // no cursor on results page
         self.tui.hide_cursor()?;
@@ -380,7 +379,11 @@ impl<'a> RustyType {
         while go_back_bool.is_none() {
             match keys.next().unwrap()? {
                 // press ctrl + 's' to go back to results page
-                Key::Ctrl('s') => go_back_bool = Some(true),
+                Key::Ctrl('s') => {
+                    let saved = SavedSettings::from(&self.config);
+                    let _ = saved.save();
+                    go_back_bool = Some(true)
+                },
                 Key::Down => {if selected < 4 {selected +=1}; self.draw_settings_screen(selected)?;}, 
                 Key::Up => {if selected > 0 {selected -=1}; self.draw_settings_screen(selected)?;},
                 Key::Right => {

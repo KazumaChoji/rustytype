@@ -1,12 +1,11 @@
 use anyhow::Result;
-use clap::StructOpt;
 
 use std::io::stdin;
 use rustytype::config::RustyTypeConfig;
 use rustytype::RustyType;
 
-fn main() -> Result<()> {
-    let config = RustyTypeConfig::parse();
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let config = RustyTypeConfig::new()?;
 
     let mut rustytype = RustyType::new(config)?;
 
